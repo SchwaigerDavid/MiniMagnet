@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bghkia2fb7lll"]
+[gd_scene load_steps=7 format=3 uid="uid://bghkia2fb7lll"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_4e22q"]
 
@@ -16,11 +16,12 @@ var NRstr: float = -2000 # negative
 
 var SAstr: float = 2000
 var SRstr: float = -2000 # negative
-var distfact: float = 1 # ?? 
-var minDistThresh: float = 0.45
+var minDistThresh: float = 0.3
+var distPOW: float = 0
 @onready var NORTHPOLE: Node3D = $NORTH
 @onready var SOUTHPOLE: Node3D = $SOUTH
-
+@onready var southcyl: Area3D = $SOUTHCYL
+@onready var northcyl: Area3D = $NORTHCYL
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	pass # Replace with function body.
@@ -42,38 +43,52 @@ func apply_magnetism(m: Node3D, delta: float):
 	
 	#Southpole attracted to other Northpole
 	distS = SOUTHPOLE.global_position.distance_to(m.NORTHPOLE.global_position)
-	if distS > minDistThresh:
+	if distS > minDistThresh and insideS.has(m):
 		wheretoS = SOUTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.SAstr
-		distS*=distfact
-		distS = pow(distS,1.5)
+		distS = pow(distS,distPOW)
 		apply_force(wheretoS/distS,SOUTHPOLE.position)
 	
 	#Northpole attracted to other Southpole
 	distS = NORTHPOLE.global_position.distance_to(m.SOUTHPOLE.global_position)
-	if distS > minDistThresh:
+	if distS > minDistThresh and insideN.has(m):
 		wheretoS = NORTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.NAstr
-		distS*=distfact
-		distS = pow(distS,1.5)
+		distS = pow(distS,distPOW)
 		apply_force(wheretoS/distS,NORTHPOLE.position)
 	
 	#Northpole repelled by other Northpole
 	distS = NORTHPOLE.global_position.distance_to(m.NORTHPOLE.global_position)
-	if distS > minDistThresh:
+	if distS > minDistThresh and insideN.has(m):
 		wheretoS = NORTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.NRstr
-		distS*=distfact
-		distS = pow(distS,1.5)
+		distS = pow(distS,distPOW)
 		apply_force(wheretoS/distS,NORTHPOLE.position)
 	
 	#Southpole repelled by other Southpole
 	distS = SOUTHPOLE.global_position.distance_to(m.SOUTHPOLE.global_position)
-	if distS > minDistThresh:
+	if distS > minDistThresh and insideS.has(m):
 		wheretoS = SOUTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.SRstr
-		distS*=distfact
-		distS = pow(distS,1.5)
+		distS = pow(distS,distPOW)
 		apply_force(wheretoS/distS,SOUTHPOLE.position)
 	
 	#if debug:
-		#print(wheretoS/distS)
+		#print(distS)
+
+@onready var insideS = []
+@onready var insideN = []
+
+func _on_southcyl_body_entered(body: Node3D) -> void:
+	insideS.append(body)
+
+
+func _on_northcyl_body_entered(body: Node3D) -> void:
+	insideN.append(body)
+
+
+func _on_southcyl_body_exited(body: Node3D) -> void:
+	insideS.erase(body)
+
+
+func _on_northcyl_body_exited(body: Node3D) -> void:
+	insideN.erase(body)
 "
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dfqv4"]
@@ -85,16 +100,20 @@ albedo_color = Color(0, 0.105882, 1, 1)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_22bs8"]
 albedo_color = Color(1, 0, 0, 1)
 
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_sm8ay"]
+height = 1.37266
+
 [node name="RigidBody3D" type="RigidBody3D"]
+physics_interpolation_mode = 1
 physics_material_override = SubResource("PhysicsMaterial_4e22q")
 max_contacts_reported = 5
 script = SubResource("GDScript_nutsc")
 
 [node name="NORTH" type="Node3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0.25)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0.506293)
 
 [node name="SOUTH" type="Node3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.25)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.513943)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_dfqv4")
@@ -106,3 +125,20 @@ material_override = SubResource("StandardMaterial3D_ejxsc")
 [node name="northbox" type="CSGBox3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.000470638, -1.19209e-07, 0.251867)
 material_override = SubResource("StandardMaterial3D_22bs8")
+
+[node name="SOUTHCYL" type="Area3D" parent="."]
+
+[node name="southattract" type="CollisionShape3D" parent="SOUTHCYL"]
+transform = Transform3D(5, 0, 0, 0, -2.18557e-07, -5, 0, 5, -2.18557e-07, 0, 0, -3.445)
+shape = SubResource("CylinderShape3D_sm8ay")
+
+[node name="NORTHCYL" type="Area3D" parent="."]
+
+[node name="northattract" type="CollisionShape3D" parent="NORTHCYL"]
+transform = Transform3D(5, 0, 0, 0, -2.18557e-07, -5, 0, 5, -2.18557e-07, 0, 0, 3.41)
+shape = SubResource("CylinderShape3D_sm8ay")
+
+[connection signal="body_entered" from="SOUTHCYL" to="." method="_on_southcyl_body_entered"]
+[connection signal="body_exited" from="SOUTHCYL" to="." method="_on_southcyl_body_exited"]
+[connection signal="body_entered" from="NORTHCYL" to="." method="_on_northcyl_body_entered"]
+[connection signal="body_exited" from="NORTHCYL" to="." method="_on_northcyl_body_exited"]
