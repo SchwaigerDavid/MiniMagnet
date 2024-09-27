@@ -1,65 +1,35 @@
-[gd_scene load_steps=6 format=3 uid="uid://df25f6rpsnqan"]
+[gd_scene load_steps=3 format=3 uid="uid://df25f6rpsnqan"]
 
-[ext_resource type="Script" path="res://Level/rigid_body_3d.gd" id="1_nefrf"]
+[ext_resource type="PackedScene" uid="uid://bghkia2fb7lll" path="res://magnet.tscn" id="1_bajdo"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_th3ki"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ssn1d"]
-albedo_color = Color(0.0987201, 0.297443, 0.734426, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_36jaj"]
-albedo_color = Color(0.658824, 0, 0, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_6hk6p"]
-size = Vector3(74.4314, 0.645508, 61.7644)
+[sub_resource type="BoxShape3D" id="BoxShape3D_ybyxj"]
+size = Vector3(27.035, 0.216, 52.925)
 
 [node name="Main" type="Node3D"]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(-0.0192199, -0.998924, 0.0422188, -0.0274519, 0.042738, 0.998709, -0.999438, 0.0180361, -0.0282438, 0, 6.43773, -2.17417)
+transform = Transform3D(-0.0192199, -0.998924, 0.0422188, -0.0274519, 0.042738, 0.998709, -0.999438, 0.0180361, -0.0282438, 0, 5.01296, 0.133918)
 fov = 84.4335
-
-[node name="metal" type="RigidBody3D" parent="." node_paths=PackedStringArray("targetMagnets")]
-transform = Transform3D(0.819602, 0, -0.572933, 0, 1, 0, 0.572933, 0, 0.819602, -2.32209, 2.69142, -2.1044)
-script = ExtResource("1_nefrf")
-targetMagnets = [NodePath("../plus"), NodePath("../minus")]
-
-[node name="CSGBox3D" type="CSGBox3D" parent="metal"]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="metal"]
-shape = SubResource("BoxShape3D_th3ki")
-
-[node name="plus" type="RigidBody3D" parent="."]
-freeze = true
-metadata/polarity = true
-
-[node name="CSGBox3D" type="CSGBox3D" parent="plus"]
-material_override = SubResource("StandardMaterial3D_ssn1d")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="plus"]
-shape = SubResource("BoxShape3D_th3ki")
-
-[node name="minus" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.00399, 0, 0)
-freeze = true
-metadata/polarity = false
-
-[node name="CSGBox3D" type="CSGBox3D" parent="minus"]
-material_override = SubResource("StandardMaterial3D_36jaj")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="minus"]
-shape = SubResource("BoxShape3D_th3ki")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 
 [node name="CSGBox3D" type="CSGBox3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.94638, -0.912742, -3.31561)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.01751, -1.16502, 1.14906)
 visible = false
-size = Vector3(10.3574, 0.271973, 10.7545)
+size = Vector3(42.2865, 0.428955, 61.7696)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.8716, -1.08999, 1.46449)
-shape = SubResource("BoxShape3D_6hk6p")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.391846, 0)
+shape = SubResource("BoxShape3D_ybyxj")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.951053, -0.309028, 0.00030353, 0.161724, 0.498552, 0.851641, -0.263332, -0.809906, 0.524126, 0, 0, 0)
+
+[node name="1" parent="." node_paths=PackedStringArray("otherMagnets") instance=ExtResource("1_bajdo")]
+transform = Transform3D(-0.0291079, 0, -0.999576, 0, 1, 0, 0.999576, 0, -0.0291079, 0, 0, 0.0269505)
+debug = true
+otherMagnets = [NodePath("../2")]
+
+[node name="2" parent="." node_paths=PackedStringArray("otherMagnets") instance=ExtResource("1_bajdo")]
+transform = Transform3D(0.0712189, 0, 0.997461, 0, 1, 0, -0.997461, 0, 0.0712189, 0, 0, -1.3131)
+otherMagnets = [NodePath("../1")]
