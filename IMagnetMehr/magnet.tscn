@@ -1,24 +1,26 @@
 [gd_scene load_steps=6 format=3 uid="uid://bghkia2fb7lll"]
 
-[sub_resource type="GDScript" id="GDScript_ow3l0"]
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_4e22q"]
+
+[sub_resource type="GDScript" id="GDScript_nutsc"]
 resource_name = "magnet"
-script/source = "extends Node3D
+script/source = "extends RigidBody3D
 class_name MagnetScript
 
 @export var debug: bool = false
 
 @export var otherMagnets: Array[Node3D] = []
 
-var NAstr: float = 1000
-var NRstr: float = -1000 # negative
+var NAstr: float = 2000
+var NRstr: float = -2000 # negative
 
-var SAstr: float = 1000
-var SRstr: float = -1000 # negative
-var distfact: float = 0.5
+var SAstr: float = 2000
+var SRstr: float = -2000 # negative
+var distfact: float = 1 # ?? 
+var minDistThresh: float = 0.45
+@onready var NORTHPOLE: Node3D = $NORTH
+@onready var SOUTHPOLE: Node3D = $SOUTH
 
-@onready var NORTHPOLE: Node3D = $RigidBody3D/NORTH
-@onready var SOUTHPOLE: Node3D = $RigidBody3D/SOUTH
-@onready var RB: RigidBody3D = $RigidBody3D
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	pass # Replace with function body.
@@ -39,34 +41,40 @@ func apply_magnetism(m: Node3D, delta: float):
 	var distS = 0
 	
 	#Southpole attracted to other Northpole
-	wheretoS = SOUTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.SAstr
-	distS = SOUTHPOLE.global_position.distance_squared_to(m.NORTHPOLE.global_position)
-	distS*=distfact
-	RB.apply_force(wheretoS/distS,SOUTHPOLE.position)
+	distS = SOUTHPOLE.global_position.distance_to(m.NORTHPOLE.global_position)
+	if distS > minDistThresh:
+		wheretoS = SOUTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.SAstr
+		distS*=distfact
+		distS = pow(distS,1.5)
+		apply_force(wheretoS/distS,SOUTHPOLE.position)
 	
 	#Northpole attracted to other Southpole
-	wheretoS = NORTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.NAstr
-	distS = NORTHPOLE.global_position.distance_squared_to(m.SOUTHPOLE.global_position)
-	distS*=distfact
-	RB.apply_force(wheretoS/distS,NORTHPOLE.position)
+	distS = NORTHPOLE.global_position.distance_to(m.SOUTHPOLE.global_position)
+	if distS > minDistThresh:
+		wheretoS = NORTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.NAstr
+		distS*=distfact
+		distS = pow(distS,1.5)
+		apply_force(wheretoS/distS,NORTHPOLE.position)
 	
 	#Northpole repelled by other Northpole
-	wheretoS = NORTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.NRstr
-	distS = NORTHPOLE.global_position.distance_squared_to(m.NORTHPOLE.global_position)
-	distS*=distfact
-	RB.apply_force(wheretoS/distS,NORTHPOLE.position)
+	distS = NORTHPOLE.global_position.distance_to(m.NORTHPOLE.global_position)
+	if distS > minDistThresh:
+		wheretoS = NORTHPOLE.global_position.direction_to(m.NORTHPOLE.global_position)*delta*m.NRstr
+		distS*=distfact
+		distS = pow(distS,1.5)
+		apply_force(wheretoS/distS,NORTHPOLE.position)
 	
 	#Southpole repelled by other Southpole
-	wheretoS = SOUTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.SRstr
-	distS = SOUTHPOLE.global_position.distance_squared_to(m.SOUTHPOLE.global_position)
-	distS*=distfact
-	RB.apply_force(wheretoS/distS,SOUTHPOLE.position)
+	distS = SOUTHPOLE.global_position.distance_to(m.SOUTHPOLE.global_position)
+	if distS > minDistThresh:
+		wheretoS = SOUTHPOLE.global_position.direction_to(m.SOUTHPOLE.global_position)*delta*m.SRstr
+		distS*=distfact
+		distS = pow(distS,1.5)
+		apply_force(wheretoS/distS,SOUTHPOLE.position)
 	
 	#if debug:
 		#print(wheretoS/distS)
 "
-
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_4e22q"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dfqv4"]
 size = Vector3(0.5, 0.5, 1)
@@ -77,27 +85,24 @@ albedo_color = Color(0, 0.105882, 1, 1)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_22bs8"]
 albedo_color = Color(1, 0, 0, 1)
 
-[node name="Magnet" type="Node3D"]
-script = SubResource("GDScript_ow3l0")
-
-[node name="RigidBody3D" type="RigidBody3D" parent="."]
+[node name="RigidBody3D" type="RigidBody3D"]
 physics_material_override = SubResource("PhysicsMaterial_4e22q")
-contact_monitor = true
 max_contacts_reported = 5
+script = SubResource("GDScript_nutsc")
 
-[node name="NORTH" type="Node3D" parent="RigidBody3D"]
+[node name="NORTH" type="Node3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0.25)
 
-[node name="SOUTH" type="Node3D" parent="RigidBody3D"]
+[node name="SOUTH" type="Node3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.25)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_dfqv4")
 
-[node name="southbox" type="CSGBox3D" parent="RigidBody3D"]
+[node name="southbox" type="CSGBox3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.25)
 material_override = SubResource("StandardMaterial3D_ejxsc")
 
-[node name="northbox" type="CSGBox3D" parent="RigidBody3D"]
+[node name="northbox" type="CSGBox3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.000470638, -1.19209e-07, 0.251867)
 material_override = SubResource("StandardMaterial3D_22bs8")
